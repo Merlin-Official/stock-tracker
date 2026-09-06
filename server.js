@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // ── Polyfill fetch for Node < 18 (Render compatibility) ──
 const nodeFetch = (() => {
   try { return require('node-fetch'); } catch (e) { return null; }
@@ -90,18 +92,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Stock Universe: Top 20 Nifty 50 (keeps API calls minimal) ──
 const ALL_SYMBOLS = [
-  'RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY',
-  'BHARTIARTL','SBIN','ITC','BAJFINANCE','HINDUNILVR',
-  'LT','KOTAKBANK','AXISBANK','MARUTI','SUNPHARMA',
-  'TITAN','WIPRO','HCLTECH','TATASTEEL','M&M'
+  'RELIANCE', 'TCS', 'HDFCBANK', 'ICICIBANK', 'INFY',
+  'BHARTIARTL', 'SBIN', 'ITC', 'BAJFINANCE', 'HINDUNILVR',
+  'LT', 'KOTAKBANK', 'AXISBANK', 'MARUTI', 'SUNPHARMA',
+  'TITAN', 'WIPRO', 'HCLTECH', 'TATASTEEL', 'M&M'
 ];
 const SYMBOLS = [...new Set(ALL_SYMBOLS)];
 
 const SECTOR_MAP = {
-  "IT": ["TCS","INFY","WIPRO","HCLTECH"],
-  "Banking & Finance": ["HDFCBANK","ICICIBANK","SBIN","BAJFINANCE","KOTAKBANK","AXISBANK"],
-  "FMCG": ["ITC","HINDUNILVR"],
-  "Auto": ["MARUTI","M&M"],
+  "IT": ["TCS", "INFY", "WIPRO", "HCLTECH"],
+  "Banking & Finance": ["HDFCBANK", "ICICIBANK", "SBIN", "BAJFINANCE", "KOTAKBANK", "AXISBANK"],
+  "FMCG": ["ITC", "HINDUNILVR"],
+  "Auto": ["MARUTI", "M&M"],
   "Pharma": ["SUNPHARMA"],
   "Energy": ["RELIANCE"],
   "Metals": ["TATASTEEL"],
@@ -134,7 +136,7 @@ async function safeFetch(url, options = {}, retries = 1) {
   const now = Date.now();
   if (now < rateLimitCooldown) {
     const wait = rateLimitCooldown - now;
-    console.log(`⏸️  Cooling down for ${(wait/1000).toFixed(0)}s...`);
+    console.log(`⏸️  Cooling down for ${(wait / 1000).toFixed(0)}s...`);
     await new Promise(r => setTimeout(r, wait));
   }
 
@@ -151,7 +153,7 @@ async function safeFetch(url, options = {}, retries = 1) {
         consecutiveRateLimits++;
         // Exponential backoff: 5s, 10s, 20s, 30s max
         const backoff = Math.min(5000 * Math.pow(2, consecutiveRateLimits - 1), 30000);
-        console.warn(`⏳ Rate limited (429). Backing off ${(backoff/1000).toFixed(0)}s (streak: ${consecutiveRateLimits})`);
+        console.warn(`⏳ Rate limited (429). Backing off ${(backoff / 1000).toFixed(0)}s (streak: ${consecutiveRateLimits})`);
         rateLimitCooldown = Date.now() + backoff;
         await new Promise(r => setTimeout(r, backoff));
         continue;
@@ -182,10 +184,10 @@ async function fetchHistory(symbol) {
       candles = data.payload.candles || (Array.isArray(data.payload) ? data.payload : []);
     }
     if (Array.isArray(candles) && candles.length) {
-      const parsed = candles.map(c => Array.isArray(c) ? { open:c[1], high:c[2], low:c[3], close:c[4] } : c);
+      const parsed = candles.map(c => Array.isArray(c) ? { open: c[1], high: c[2], low: c[3], close: c[4] } : c);
       const closes = parsed.map(c => c.close).filter(v => v != null);
       const prev = parsed.length >= 2 ? parsed[parsed.length - 2] : parsed[0];
-      historicalData[symbol] = { closes, yesterdayHigh: prev.high||0, yesterdayLow: prev.low||0 };
+      historicalData[symbol] = { closes, yesterdayHigh: prev.high || 0, yesterdayLow: prev.low || 0 };
     }
   } catch (e) { /* skip */ }
 }
@@ -249,7 +251,7 @@ async function pollQuotes() {
     const CHUNK = 3; // Smaller chunks = fewer parallel requests
     const DELAY = 3000; // 3s between chunks
     const totalChunks = Math.ceil(SYMBOLS.length / CHUNK);
-    console.log(`📡 Fetching quotes: ${SYMBOLS.length} stocks in chunks of ${CHUNK} (${totalChunks} chunks, ${DELAY/1000}s delay)...`);
+    console.log(`📡 Fetching quotes: ${SYMBOLS.length} stocks in chunks of ${CHUNK} (${totalChunks} chunks, ${DELAY / 1000}s delay)...`);
 
     for (let i = 0; i < SYMBOLS.length; i += CHUNK) {
       const chunk = SYMBOLS.slice(i, i + CHUNK);
@@ -305,7 +307,7 @@ app.post('/api/quotes', (req, res) => {
       const live = latestMarketData.allStocks.find(x => x.symbol === s);
       if (live) return live;
     }
-    return { symbol: s, sector: SECTOR_LOOKUP[s]||'Others', nifty50: NIFTY50.has(s), ltp:null, changePct:null, rsi:null };
+    return { symbol: s, sector: SECTOR_LOOKUP[s] || 'Others', nifty50: NIFTY50.has(s), ltp: null, changePct: null, rsi: null };
   });
   res.json({ stocks, lastUpdated: latestMarketData?.lastUpdated || null });
 });
@@ -313,14 +315,14 @@ app.post('/api/quotes', (req, res) => {
 // All stocks list for explore/browse
 app.get('/api/stocks', (req, res) => {
   const stocks = SYMBOLS.map(symbol => {
-    const base = { symbol, sector: SECTOR_LOOKUP[symbol]||'Others', nifty50: NIFTY50.has(symbol) };
+    const base = { symbol, sector: SECTOR_LOOKUP[symbol] || 'Others', nifty50: NIFTY50.has(symbol) };
     if (latestMarketData) {
       const live = latestMarketData.allStocks.find(s => s.symbol === symbol);
       if (live) Object.assign(base, { ltp: live.ltp, changePct: live.changePct, change: live.change, rsi: live.rsi });
     }
     return base;
   });
-  stocks.sort((a,b) => (b.changePct||0) - (a.changePct||0));
+  stocks.sort((a, b) => (b.changePct || 0) - (a.changePct || 0));
   res.json({ stocks, sectors: Object.keys(SECTOR_MAP), lastUpdated: latestMarketData?.lastUpdated });
 });
 
@@ -329,6 +331,33 @@ app.get('/api/status', (req, res) => res.json({
   loaded: Object.keys(historicalData).length, total: SYMBOLS.length,
   lastUpdate: lastUpdate ? new Date(lastUpdate).toISOString() : null
 }));
+
+// ── Helper to call Gemini AI with model fallbacks ──
+async function callGemini(contents, systemInstruction) {
+  if (!aiClient) return null;
+  const candidateModels = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-pro', 'gemini-1.5-pro'];
+  let lastErr = null;
+
+  for (const model of candidateModels) {
+    try {
+      const response = await aiClient.models.generateContent({
+        model,
+        contents,
+        config: {
+          systemInstruction,
+          temperature: 0.7
+        }
+      });
+      if (response && response.text) {
+        return response.text;
+      }
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[Gemini] Model ${model} attempt failed:`, err?.message || err?.status || err);
+    }
+  }
+  throw lastErr;
+}
 
 // ── MarketPulse AI Chat Endpoint ──
 app.post('/api/chat', async (req, res) => {
@@ -345,8 +374,8 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     // Construct market context
-    const contextStr = watchlist && watchlist.length > 0 
-      ? watchlist.map(s => `${s.symbol}: ₹${s.ltp||'N/A'} (Change: ${s.changePct!=null?s.changePct.toFixed(1):'N/A'}%, RSI: ${s.rsi||'N/A'})`).join('\n')
+    const contextStr = watchlist && watchlist.length > 0
+      ? watchlist.map(s => `${s.symbol}: ₹${s.ltp || 'N/A'} (Change: ${s.changePct != null ? s.changePct.toFixed(1) : 'N/A'}%, RSI: ${s.rsi || 'N/A'})`).join('\n')
       : "The user has an empty watchlist.";
 
     const systemInstruction = `You are MarketPulse AI, a smart, concise, and helpful financial assistant.
@@ -362,29 +391,59 @@ Rules:
 4. If they ask a general market question, provide a knowledgeable answer.
 5. Be professional but conversational (like a smart market companion).`;
 
-    const response = await aiClient.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.7
-      }
-    });
-
-    res.json({ reply: response.text });
+    const text = await callGemini(prompt, systemInstruction);
+    return res.json({ reply: text });
   } catch (error) {
-    console.error('AI Chat Error:', error);
-    res.status(500).json({ error: 'AI generation failed' });
+    console.error('AI Chat Error:', error?.message || error);
+    const status = error?.status || error?.code;
+    if (status === 429) {
+      return res.json({ reply: 'MarketPulse AI rate limit reached (Gemini free tier). Please wait ~1 minute and try again.' });
+    }
+    if (status === 503 || (error?.message && error.message.includes('overloaded'))) {
+      return res.json({ reply: 'The Gemini AI model is currently experiencing high global traffic (overloaded). Please try asking again in a few moments.' });
+    }
+    return res.json({ reply: 'MarketPulse AI is momentarily unavailable. Please try your question again in a moment.' });
+  }
+});
+
+// ── Dashboard Summary Endpoint ──
+app.post('/api/summary', async (req, res) => {
+  const { alerts, lastVisited } = req.body;
+  if (!aiClient) {
+    return res.json({ summary: "No major movements since your last visit. You're all caught up!" });
+  }
+  try {
+    const contextStr = alerts && alerts.length > 0
+      ? JSON.stringify(alerts.map(a => a.symbol + ' movements: ' + a.reasons.map(r => r.text).join(', ')))
+      : "No alerts/changes.";
+    const dateStr = lastVisited ? new Date(parseInt(lastVisited)).toLocaleString('en-IN') : "a while ago";
+
+    const systemInstruction = `You are a concise financial assistant analyzing the user's customized watchlist on MarketPulse. 
+    The user last checked the market on: ${dateStr}.
+    Current alerts/changes for their watchlist: ${contextStr}
+    
+    Task: Provide a very brief (1-2 sentences max), friendly summary of the market changes since their last visit. 
+    If there are no alerts, say something encouraging like "No major movements since your last visit. You're all caught up!"
+    Do not use introductory greetings, just provide the summary directly.`;
+
+    const text = await callGemini("Give me the summary.", systemInstruction);
+    return res.json({ summary: text });
+  } catch (error) {
+    console.error('AI Summary Error:', error?.message || error);
+    if (error?.status === 429) {
+      return res.json({ summary: "No major movements since your last visit. You're all caught up! (AI rate limit reached)" });
+    }
+    return res.json({ summary: "Here's what changed while you were away." });
   }
 });
 
 // ── Detailed Stock View (Deterministic Mock Data) ──
 app.get('/api/stock/details/:symbol', (req, res) => {
   const sym = req.params.symbol.toUpperCase();
-  
+
   // Use a simple hash of the symbol name to generate stable, deterministic mock data
   const hash = Array.from(sym).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  
+
   // Try to get real basic info if available
   let basePrice = 1000 + (hash * 10 % 2000);
   let changePct = ((hash % 100) / 20) - 2.5; // -2.5% to +2.5%
@@ -429,8 +488,8 @@ app.get('/api/stock/details/:symbol', (req, res) => {
   };
 
   // Performance
-  const todayLow = basePrice * (1 - ((hash%3)/100 + 0.01));
-  const todayHigh = basePrice * (1 + ((hash%3)/100 + 0.01));
+  const todayLow = basePrice * (1 - ((hash % 3) / 100 + 0.01));
+  const todayHigh = basePrice * (1 + ((hash % 3) / 100 + 0.01));
   const week52Low = basePrice * 0.7;
   const week52High = basePrice * 1.4;
   const performance = {
@@ -438,7 +497,7 @@ app.get('/api/stock/details/:symbol', (req, res) => {
     todayHigh: todayHigh.toFixed(2),
     week52Low: week52Low.toFixed(2),
     week52High: week52High.toFixed(2),
-    openPrice: (basePrice - change + ((hash%10)/100)).toFixed(2),
+    openPrice: (basePrice - change + ((hash % 10) / 100)).toFixed(2),
     prevClose: prevClose.toFixed(2),
     liveVolume: (hash * 1234).toLocaleString(),
     lowerCircuit: (basePrice * 0.9).toFixed(2),
@@ -448,12 +507,12 @@ app.get('/api/stock/details/:symbol', (req, res) => {
   // Fundamentals
   const fundamentals = {
     marketCap: "₹" + (hash * 123).toLocaleString() + "Cr",
-    roe: (15 + (hash%15)).toFixed(2) + "%",
-    peRatio: (10 + (hash%20)).toFixed(2),
+    roe: (15 + (hash % 15)).toFixed(2) + "%",
+    peRatio: (10 + (hash % 20)).toFixed(2),
     eps: (hash % 300).toFixed(2),
     pbRatio: ((hash % 10) / 2 + 1).toFixed(2),
     divYield: ((hash % 3) + 0.5).toFixed(2) + "%",
-    industryPe: (15 + (hash%10)).toFixed(2),
+    industryPe: (15 + (hash % 10)).toFixed(2),
     bookValue: (hash * 2.5).toFixed(2),
     debtToEquity: ((hash % 5) / 10).toFixed(2),
     faceValue: 10
@@ -462,20 +521,20 @@ app.get('/api/stock/details/:symbol', (req, res) => {
   // Financial Performance (Mock bar chart data)
   const financials = {
     yearly: [
-      { year: "'22", rev: 5000 + hash, prof: 1000 + (hash/2) },
-      { year: "'23", rev: 6000 + hash, prof: 1500 + (hash/2) },
-      { year: "'24", rev: 7500 + hash, prof: 2000 + (hash/2) },
-      { year: "'25", rev: 8000 + hash, prof: 1800 + (hash/2) },
-      { year: "'26", rev: 8695 + hash, prof: 2825 + (hash/2) }
+      { year: "'22", rev: 5000 + hash, prof: 1000 + (hash / 2) },
+      { year: "'23", rev: 6000 + hash, prof: 1500 + (hash / 2) },
+      { year: "'24", rev: 7500 + hash, prof: 2000 + (hash / 2) },
+      { year: "'25", rev: 8000 + hash, prof: 1800 + (hash / 2) },
+      { year: "'26", rev: 8695 + hash, prof: 2825 + (hash / 2) }
     ]
   };
 
   // Shareholding
   const shareholding = {
-    promoters: (40 + (hash%30)).toFixed(2),
-    fii: (10 + (hash%15)).toFixed(2),
-    dii: (5 + (hash%10)).toFixed(2),
-    public: (20 + (hash%10)).toFixed(2)
+    promoters: (40 + (hash % 30)).toFixed(2),
+    fii: (10 + (hash % 15)).toFixed(2),
+    dii: (5 + (hash % 10)).toFixed(2),
+    public: (20 + (hash % 10)).toFixed(2)
   };
 
   // About
@@ -489,7 +548,7 @@ app.get('/api/stock/details/:symbol', (req, res) => {
   // Mock historical chart data (100 points for a nice sparkline)
   const chartData = [];
   let cp = prevClose;
-  for (let i=0; i<100; i++) {
+  for (let i = 0; i < 100; i++) {
     cp = cp * (1 + (Math.random() - 0.48) * 0.01);
     chartData.push(cp);
   }

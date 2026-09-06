@@ -173,6 +173,35 @@
     flex-shrink: 0;
   }
   
+  /* ── Top Limitation Banner ── */
+  .top-limitation-banner {
+    background: rgba(240, 165, 0, 0.07);
+    border-bottom: 1px solid rgba(240, 165, 0, 0.18);
+    padding: 7px 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .top-limitation-banner .banner-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #F8B838;
+    letter-spacing: 0.15px;
+  }
+  .top-limitation-banner .banner-icon {
+    width: 15px;
+    height: 15px;
+    stroke: #F8B838;
+    flex-shrink: 0;
+  }
+  .top-limitation-banner .banner-text {
+    line-height: 1.2;
+  }
+  
   .search-container {
     position: relative;
     width: 360px;

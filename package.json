@@ -13,6 +13,7 @@
   "dependencies": {
     "@google/genai": "^2.21.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.21.0",
     "node-fetch": "^2.7.0",
     "otpauth": "^9.5.1",

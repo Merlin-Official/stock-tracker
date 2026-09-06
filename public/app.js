@@ -12,7 +12,7 @@
 
   const THRESHOLD_MINOR = 1;
   const THRESHOLD_WATCH = 3;
-  const THRESHOLD_HIGH  = 5;
+  const THRESHOLD_HIGH = 5;
 
   const KEY_WL = 'mp_watchlist';
   const KEY_SNAP = 'mp_snapshots';
@@ -60,7 +60,7 @@
     const isToday = now.toDateString() === d.toDateString();
     const isYesterday = new Date(now - 86400000).toDateString() === d.toDateString();
     const prefix = isToday ? 'Today' : isYesterday ? 'Yesterday' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-    return `${prefix}, ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+    return `${prefix}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   }
 
   function timeAgo(isoString) {
@@ -113,7 +113,7 @@
 
   const Detect = {
     saveSnap() { localStorage.setItem(KEY_SNAP, JSON.stringify(snapshots)); },
-    
+
     updateVisit() {
       lastVisit = Date.now();
       localStorage.setItem(KEY_LAST, lastVisit.toString());
@@ -143,14 +143,14 @@
     analyze(stock) {
       const snap = snapshots[stock.symbol];
       if (!snap || !stock.ltp) return null;
-      
+
       const pDiff = ((stock.ltp - snap.price) / snap.price) * 100;
       const rsiNow = stock.rsi || 50;
       const rsiOld = snap.rsi || 50;
-      
+
       const reasons = [];
       let level = 'normal';
-      
+
       if (Math.abs(pDiff) >= THRESHOLD_HIGH) {
         level = 'high';
         reasons.push({
@@ -179,7 +179,7 @@
         level = level === 'normal' ? 'watch' : level;
         reasons.push({ color: 'green', text: `Entered oversold zone (RSI ${rsiNow.toFixed(0)})` });
       }
-      
+
       if (stock.yHigh && stock.ltp > stock.yHigh && snap.price <= stock.yHigh) {
         level = level === 'normal' || level === 'minor' ? 'watch' : level;
         reasons.push({ color: 'green', text: 'New 30-day high' });
@@ -249,7 +249,7 @@
       this.saveOrders(orders);
 
       if (type === 'MARKET') {
-        this._executeInternal(order, portfolio); 
+        this._executeInternal(order, portfolio);
         toast(`${side === 'BUY' ? '📗' : '📕'} Paper ${side}: ${qty} × ${symbol} @ ₹${price.toLocaleString('en-IN')}`);
       } else {
         toast(`⏳ Limit ${side} placed: ${qty} × ${symbol} @ ₹${price.toLocaleString('en-IN')}`);
@@ -429,16 +429,16 @@
         tr.innerHTML = `
           <td>
             <div class="sym-col">
-              <div class="sym-icon">${sym.substring(0,2)}</div>
+              <div class="sym-icon">${sym.substring(0, 2)}</div>
               <div class="sym-name">${sym}</div>
             </div>
           </td>
-          <td class="right"><div class="val-price">₹${h.avgPrice.toLocaleString('en-IN', {minimumFractionDigits:2})}</div></td>
+          <td class="right"><div class="val-price">₹${h.avgPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div></td>
           <td class="right">${h.qty}</td>
           <td class="right">₹${current.toLocaleString('en-IN')}</td>
           <td class="right">
             <div class="change-pill ${pnl >= 0 ? 'up' : 'down'}">
-              ${pnl >= 0 ? '+' : ''}₹${pnl.toLocaleString('en-IN', {minimumFractionDigits:0})} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%)
+              ${pnl >= 0 ? '+' : ''}₹${pnl.toLocaleString('en-IN', { minimumFractionDigits: 0 })} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%)
             </div>
           </td>
         `;
@@ -470,12 +470,12 @@
       el.statAttn.textContent = '0';
       return;
     }
-    
+
     el.alertsEmpty.style.display = 'none';
     el.alertsCont.innerHTML = '';
-    
+
     let attnCount = 0;
-    
+
     alerts.forEach((a, i) => {
       if (a.level === 'high') attnCount++;
 
@@ -513,7 +513,7 @@
       `;
       el.alertsCont.insertAdjacentHTML('beforeend', html);
     });
-    
+
     el.statMean.textContent = alerts.length;
     el.statAttn.textContent = attnCount;
   }
@@ -525,7 +525,7 @@
       return;
     }
     el.wlEmpty.style.display = 'none';
-    
+
     stocks.forEach(s => {
       const alert = alertsMap[s.symbol];
       const level = alert ? alert.level : 'normal';
@@ -547,7 +547,7 @@
 
       const initials = s.symbol.substring(0, 2);
       const companyName = s.companyName || s.sector || '';
-      
+
       const tr = document.createElement('tr');
       tr.className = rowClass + " clickable-row";
       tr.dataset.sym = s.symbol;
@@ -584,16 +584,16 @@
           </button>
         </td>
       `;
-      
+
       tr.addEventListener('click', (e) => {
         if (!e.target.closest('.del-btn')) {
           openStockDetails(s.symbol);
         }
       });
-      
+
       el.wlBody.appendChild(tr);
     });
-    
+
     document.querySelectorAll('.del-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         WL.remove(e.currentTarget.dataset.sym);
@@ -606,28 +606,28 @@
     const portfolio = PaperTrade.getPortfolio();
     const pendingSymbols = PaperTrade.getOrders().filter(o => o.status === 'PENDING').map(o => o.symbol);
     const allSymbols = [...new Set([...watchlist, ...Object.keys(portfolio), ...pendingSymbols])];
-    
-    if (allSymbols.length === 0) { 
-      renderTable([], {}); 
-      renderAlerts([]); 
-      return; 
+
+    if (allSymbols.length === 0) {
+      renderTable([], {});
+      renderAlerts([]);
+      return;
     }
-    
+
     try {
       const res = await fetch('/api/quotes', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symbols: allSymbols })
       });
       const data = await res.json();
-      currentStocks = data.stocks.map(s => ({...s, lastUpdated: data.lastUpdated}));
-      
+      currentStocks = data.stocks.map(s => ({ ...s, lastUpdated: data.lastUpdated }));
+
       const livePrices = {};
       currentStocks.forEach(s => { livePrices[s.symbol] = s.ltp; });
       PaperTrade.processPending(livePrices);
-      
+
       const alerts = [];
       const alertsMap = {};
-      
+
       currentStocks.forEach(s => {
         if (!watchlist.includes(s.symbol)) return;
 
@@ -641,15 +641,49 @@
         }
       });
       Detect.saveSnap();
-      
+
       const levelOrder = { high: 0, watch: 1, minor: 2 };
       alerts.sort((a, b) => (levelOrder[a.level] ?? 3) - (levelOrder[b.level] ?? 3));
-      
+
       renderAlerts(alerts);
       renderTable(currentStocks.filter(s => watchlist.includes(s.symbol)), alertsMap);
-      
+
       if (el.lblNow) el.lblNow.textContent = fmtTime(Date.now());
-      
+
+      // Update greeting
+      const greetingEl = document.getElementById('dashboard-greeting');
+      if (greetingEl) {
+        greetingEl.textContent = getGreeting() + ', Sir/Mam';
+      }
+
+      // Fetch AI Summary (Rate limit fix: Only fetch once per session to avoid blowing Gemini free-tier 15RPM)
+      const subtitleEl = document.getElementById('dashboard-subtitle');
+      if (subtitleEl && !window.__aiSummaryFetched) {
+        window.__aiSummaryFetched = true;
+        subtitleEl.innerHTML = `<span style="opacity: 0.7">✨ Asking MarketPulse AI...</span>`;
+        try {
+          const summaryRes = await fetch('/api/summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              alerts: alerts.map(a => ({ symbol: a.stock.symbol, reasons: a.reasons })),
+              lastVisited: lastVisit
+            })
+          });
+          const summaryData = await summaryRes.json();
+          if (summaryData.summary) {
+            // parse basic markdown asterisks to bold just in case
+            const formatted = summaryData.summary.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            subtitleEl.innerHTML = `✨ <b>MarketPulse AI:</b> ` + formatted;
+            subtitleEl.dataset.cachedHtml = subtitleEl.innerHTML;
+          }
+        } catch (e) {
+          subtitleEl.textContent = "Here's what changed while you were away.";
+        }
+      } else if (subtitleEl && subtitleEl.dataset.cachedHtml) {
+        subtitleEl.innerHTML = subtitleEl.dataset.cachedHtml;
+      }
+
     } catch (e) { console.error('Refresh error', e); }
   }
 
@@ -658,20 +692,26 @@
     try {
       const res = await fetch(`/api/stock/details/${symbol}`);
       const data = await res.json();
-      
+
       // Update basic header info
-      document.getElementById('sd-logo').textContent = data.symbol.substring(0,2);
-      document.getElementById('sd-symbol').textContent = `${data.symbol} · NSE`;
+      document.getElementById('sd-logo').textContent = data.symbol.substring(0, 2);
+      const symEl = document.getElementById('sd-symbol');
+      symEl.textContent = `${data.symbol} · NSE`;
+      symEl.dataset.rawSymbol = data.symbol;
       document.getElementById('sd-name').textContent = data.companyName;
-      document.getElementById('sd-ltp').textContent = `₹${data.ltp.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
-      
+      document.getElementById('sd-ltp').textContent = `₹${data.ltp.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
       const changeEl = document.getElementById('sd-change');
       changeEl.className = `sd-change ${data.changePct >= 0 ? 'text-green' : 'text-red'}`;
       changeEl.innerHTML = `${data.changePct >= 0 ? '+' : ''}${data.change.toFixed(2)} (${data.changePct.toFixed(2)}%) <span class="sd-duration">1D</span>`;
-      
+
       // Order panel header
       document.getElementById('op-title').textContent = data.companyName;
-      document.getElementById('op-sub-price').textContent = `NSE ₹${data.ltp.toLocaleString('en-IN', {minimumFractionDigits:2})}`;
+      document.getElementById('op-sub-price').textContent = `NSE ₹${data.ltp.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+      // trigger active tab refresh
+      const activeTabBtn = document.querySelector('.sd-nav-link.active');
+      if (activeTabBtn) activeTabBtn.click();
 
       // Save current detail context for order panel
       currentDetailSymbol = data.symbol;
@@ -702,7 +742,7 @@
 
       function updateOrderPanel() {
         const q = parseInt(opQty.value) || 0;
-        
+
         let activePrice = currentDetailLtp;
         if (orderType === 'LIMIT') {
           opPrice.disabled = false;
@@ -727,10 +767,10 @@
         opBalance.textContent = '₹' + PaperTrade.getBalance().toLocaleString('en-IN');
         opActionBtn.textContent = orderSide === 'BUY' ? 'Buy' : 'Sell';
         opActionBtn.style.background = orderSide === 'BUY' ? 'var(--green-primary)' : 'var(--red-primary)';
-        
+
         opTabBuy.className = 'op-tab' + (orderSide === 'BUY' ? ' active' : '');
         opTabSell.className = 'op-tab' + (orderSide === 'SELL' ? ' active' : '');
-        
+
         opTypeMarket.className = 'op-type-btn' + (orderType === 'MARKET' ? ' active' : '');
         opTypeLimit.className = 'op-type-btn' + (orderType === 'LIMIT' ? ' active' : '');
 
@@ -745,7 +785,7 @@
           if (holding && q > 0) {
             const sellPnl = (activePrice - holding.avgPrice) * Math.min(q, availShares);
             opPnlRow.style.display = 'flex';
-            opEstPnl.textContent = (sellPnl >= 0 ? '+' : '') + '₹' + sellPnl.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            opEstPnl.textContent = (sellPnl >= 0 ? '+' : '') + '₹' + sellPnl.toLocaleString('en-IN', { minimumFractionDigits: 2 });
             opEstPnl.style.color = sellPnl >= 0 ? 'var(--green-primary)' : 'var(--red-primary)';
           } else {
             opPnlRow.style.display = 'none';
@@ -772,7 +812,7 @@
       opActionBtn.onclick = () => {
         const q = parseInt(opQty.value) || 0;
         if (q <= 0) { toast('Enter a valid quantity'); return; }
-        
+
         let price = currentDetailLtp;
         if (orderType === 'LIMIT') {
           price = parseFloat(opPrice.value) || 0;
@@ -804,7 +844,7 @@
       document.getElementById('depth-sell-pct').textContent = data.depth.sellOrdersPct + '%';
       document.getElementById('depth-bar-buy').style.width = data.depth.buyOrdersPct + '%';
       document.getElementById('depth-bar-sell').style.width = data.depth.sellOrdersPct + '%';
-      
+
       document.getElementById('depth-bids').innerHTML = data.depth.bids.map(b => `<div class="depth-row buy"><span class="flex-1">${b.price}</span><span class="text-green">${b.qty}</span></div>`).join('');
       document.getElementById('depth-asks').innerHTML = data.depth.asks.map(a => `<div class="depth-row sell"><span class="flex-1">${a.price}</span><span class="text-red">${a.qty}</span></div>`).join('');
       document.getElementById('depth-bid-tot').textContent = data.depth.bidTotal;
@@ -851,8 +891,8 @@
       const maxFin = Math.max(...data.financials.yearly.map(f => Math.max(f.rev, f.prof)));
       document.getElementById('fin-bar-chart').innerHTML = data.financials.yearly.map(f => `
         <div class="fin-col">
-          <div class="fin-bar bg-slate" style="height: ${(f.rev/maxFin)*100}%"></div>
-          <div class="fin-bar bg-green" style="height: ${(f.prof/maxFin)*100}%"></div>
+          <div class="fin-bar bg-slate" style="height: ${(f.rev / maxFin) * 100}%"></div>
+          <div class="fin-bar bg-green" style="height: ${(f.prof / maxFin) * 100}%"></div>
           <div class="fin-lbl">${f.year}</div>
         </div>
       `).join('');
@@ -864,7 +904,7 @@
       let pathD = "";
       let fillD = "";
       const step = 800 / (data.chartData.length - 1);
-      
+
       data.chartData.forEach((val, i) => {
         const x = i * step;
         const y = 300 - (((val - minPrice) / range) * 260 + 20); // leave 20px padding
@@ -877,15 +917,15 @@
         }
       });
       fillD += `L 800,300 Z`;
-      
+
       const chartPath = document.getElementById('sd-chart-path');
       const chartFill = document.getElementById('sd-chart-fill');
       const isNegative = data.changePct < 0;
       const strokeColor = isNegative ? 'var(--red-primary)' : 'var(--green-primary)';
-      
+
       chartPath.setAttribute('d', pathD);
       chartPath.setAttribute('stroke', strokeColor);
-      
+
       chartFill.setAttribute('d', fillD);
       // update gradient colors
       const grad = document.getElementById('chartGrad');
@@ -925,10 +965,10 @@
 
       // Ensure Overview tab works again when clicked
       document.querySelector('[data-tab="overview"]').addEventListener('click', () => {
-         document.getElementById('tab-stock-details').style.display = 'none';
-      }, {once: true});
+        document.getElementById('tab-stock-details').style.display = 'none';
+      }, { once: true });
 
-    } catch(e) {
+    } catch (e) {
       console.error("Failed to load stock details", e);
       toast("Failed to load stock details");
     }
@@ -950,7 +990,7 @@
               <strong>${r.symbol}</strong>
               <div style="font-size:0.7rem;color:var(--text-tertiary)">${r.sector}</div>
             </div>
-            ${r.ltp ? `<div class="${r.changePct>=0?'text-green':'text-red'}" style="margin-right: 10px;">₹${r.ltp}</div>` : ''}
+            ${r.ltp ? `<div class="${r.changePct >= 0 ? 'text-green' : 'text-red'}" style="margin-right: 10px;">₹${r.ltp}</div>` : ''}
             <button class="icon-btn small btn-add-search" data-sym="${r.symbol}" title="Add to Watchlist">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
@@ -959,7 +999,7 @@
         el.dropdown.style.display = 'block';
       }, DEBOUNCE);
     });
-    
+
     el.dropdown.addEventListener('click', e => {
       const addBtn = e.target.closest('.btn-add-search');
       if (addBtn) {
@@ -979,7 +1019,7 @@
         el.dropdown.style.display = 'none';
       }
     });
-    
+
     document.addEventListener('click', e => {
       if (!e.target.closest('#search-wrap')) el.dropdown.style.display = 'none';
     });
@@ -1023,16 +1063,16 @@
     e.preventDefault();
     const text = el.aiInput.value.trim();
     if (!text) return;
-    
+
     el.aiInput.value = '';
     addMessage(text, true);
     setAiState('thinking');
-    
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           prompt: text,
           watchlist: currentStocks.map(s => ({
             symbol: s.symbol, ltp: s.ltp, changePct: s.changePct, rsi: s.rsi
@@ -1041,10 +1081,10 @@
       });
       const data = await res.json();
       setAiState('idle');
-      addMessage(data.reply);
+      addMessage(data.reply || data.error || "I could not retrieve an answer right now. Please try again.");
     } catch (err) {
       setAiState('idle');
-      addMessage("I'm sorry, I couldn't connect to the server right now.");
+      addMessage("I'm sorry, I couldn't connect to the server right now. Please check your connection and try again.");
     }
   });
 
@@ -1106,13 +1146,13 @@
               <div class="sym-name">${sym}</div>
             </div>
           </td>
-          <td class="right"><div class="val-price">₹${h.avgPrice.toLocaleString('en-IN', {minimumFractionDigits:2})}</div></td>
+          <td class="right"><div class="val-price">₹${h.avgPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div></td>
           <td class="right">${h.qty}</td>
           <td class="right">₹${invested.toLocaleString('en-IN')}</td>
           <td class="right">₹${current.toLocaleString('en-IN')}</td>
           <td class="right">
             <div class="change-pill ${pnl >= 0 ? 'up' : 'down'}">
-              ${pnl >= 0 ? '+' : ''}₹${pnl.toLocaleString('en-IN', {minimumFractionDigits:0})} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%)
+              ${pnl >= 0 ? '+' : ''}₹${pnl.toLocaleString('en-IN', { minimumFractionDigits: 0 })} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%)
             </div>
           </td>
           <td class="center">
@@ -1163,7 +1203,7 @@
         }
 
         tr.innerHTML = `
-          <td><div class="text-updated">${d.toLocaleDateString('en-IN', {day:'numeric',month:'short'})} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div></td>
+          <td><div class="text-updated">${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div></td>
           <td><strong>${o.symbol}</strong></td>
           <td class="center">
             <div class="attention-badge ${o.side === 'BUY' ? 'att-normal' : 'att-high'}" style="${o.side === 'BUY' ? 'background:var(--green-light);color:var(--green-primary)' : ''}">
@@ -1230,6 +1270,51 @@
     initSearch();
     initTabs();
 
+    // -- Stock Details Time Toggles --
+    document.querySelectorAll('.sd-time-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        if (!e.currentTarget.textContent.trim()) return; // avoid SVG standard icon
+        document.querySelectorAll('.sd-time-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        // trigger a random chart update visualization
+        const chartPath = document.getElementById('sd-chart-path');
+        const chartFill = document.getElementById('sd-chart-fill');
+        if (chartPath && chartFill) {
+          chartPath.style.opacity = '0.3';
+          setTimeout(() => {
+            const dataPts = 30 + Math.floor(Math.random() * 40);
+            const w = 800, h = 300;
+            let d = `M 0,${150 + (Math.random() * 100 - 50)}`;
+            let startY = 150;
+            for (let i = 1; i <= dataPts; i++) {
+              startY += (Math.random() * 40 - 20);
+              const x = (i / dataPts) * w;
+              const y = Math.max(20, Math.min(280, startY));
+              d += ` L ${x},${y}`;
+            }
+            chartPath.setAttribute('d', d);
+            chartFill.setAttribute('d', d + ` L ${w},${h} L 0,${h} Z`);
+            chartPath.style.opacity = '1';
+          }, 300);
+        }
+      });
+    });
+
+    // -- Stock Details Secondary Nav --
+    document.querySelectorAll('.sd-nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        document.querySelectorAll('.sd-nav-link').forEach(l => l.classList.remove('active'));
+        const target = e.currentTarget;
+        target.classList.add('active');
+
+        const tabName = target.textContent.trim().replace('&', '');
+        document.querySelectorAll('.sd-tab-pane').forEach(p => p.style.display = 'none');
+        const pane = document.getElementById('sd-tab-' + tabName);
+        if (pane) pane.style.display = 'block';
+
+      });
+    });
+
     const mobileAiToggle = document.getElementById('mobile-ai-toggle');
     const mobileAiClose = document.getElementById('mobile-ai-close');
     const aiPanel = document.querySelector('.ai-panel');
@@ -1261,7 +1346,7 @@
       else {
         const hrs = Math.floor(mins / 60);
         if (hrs < 24) awayStr = `${hrs} hr${hrs > 1 ? 's' : ''} ago`;
-        else { const d = Math.floor(hrs/24); awayStr = `${d} day${d>1?'s':''} ago`; }
+        else { const d = Math.floor(hrs / 24); awayStr = `${d} day${d > 1 ? 's' : ''} ago`; }
       }
       subtitleEl.textContent = `Here's what changed since your last visit (${awayStr}).`;
     }
